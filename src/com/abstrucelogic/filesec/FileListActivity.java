@@ -95,7 +95,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 					//File Encripe hear
 					displayAlertDialog(nfile);
 					// Finish the activity
-				
+
 				} else {
 					mDirectory = nfile;
 					// Update the files list
@@ -138,39 +138,26 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 			public void onClick(DialogInterface dialog, int which) {
 				if(!nfile.getName().startsWith(getString(R.string.enc_))){
 					Toast.makeText(FileListActivity.this,"Encrypting...", Toast.LENGTH_SHORT).show();
-					new AsyncTask< File, Integer, String>(){
-						@Override
-						protected String doInBackground(File... params) {
-							CryptoManager cryptoManager = CryptoManager.getInstance();
-							CryptoConf conf= new CryptoConf();
-							conf.setCipher(getEncCipher());
-							conf.setInputFilePath(params[0].getAbsolutePath());
-							conf.setListener(FileListActivity.this);
-							conf.setOperation(CryptoOperation.ENCRYPTION);
-							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+params[0].getName());
-							conf.setProcessMode(CryptoProcessMode.SYNC);
-							cryptoManager.process(conf);
-							return null;
-						}
-					}.execute(nfile);
+					CryptoManager cryptoManager = CryptoManager.getInstance();
+					CryptoConf conf= new CryptoConf();
+					conf.setCipher(getEncCipher());
+					conf.setInputFilePath(nfile.getAbsolutePath());
+					conf.setListener(FileListActivity.this);
+					conf.setOperation(CryptoOperation.ENCRYPTION);
+					conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+nfile.getName());
+					conf.setProcessMode(CryptoProcessMode.ASYNC);
+					cryptoManager.process(conf,FileListActivity.this);
 				}else{
 					Toast.makeText(FileListActivity.this,"Decripting...", Toast.LENGTH_SHORT).show();
-					new AsyncTask< File, Integer, String>(){
-
-						@Override
-						protected String doInBackground(File... params) {
-							CryptoManager cryptoManager = CryptoManager.getInstance();
-							CryptoConf conf= new CryptoConf();
-							conf.setCipher(getDecCipher());
-							conf.setInputFilePath(params[0].getAbsolutePath());
-							conf.setListener(FileListActivity.this);
-							conf.setOperation(CryptoOperation.DECRYPTION);
-							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.dec_) + params[0].getName());
-							conf.setProcessMode(CryptoProcessMode.SYNC);
-							cryptoManager.process(conf);
-							return null;
-						}
-					}.execute(nfile);
+					CryptoManager cryptoManager = CryptoManager.getInstance();
+					CryptoConf conf= new CryptoConf();
+					conf.setCipher(getDecCipher());
+					conf.setInputFilePath(nfile.getAbsolutePath());
+					conf.setListener(FileListActivity.this);
+					conf.setOperation(CryptoOperation.DECRYPTION);
+					conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.dec_) + nfile.getName());
+					conf.setProcessMode(CryptoProcessMode.ASYNC);
+					cryptoManager.process(conf,FileListActivity.this);
 				}
 			}
 		});
@@ -211,7 +198,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		return cipher;
 
 	}
-	
+
 	private static Cipher getDecCipher() {
 		String key = "hoplesskey123456";
 		Cipher cipher = null;
@@ -227,7 +214,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		}
 		return cipher;
 	}
-	
+
 	@Override
 	protected void onResume() {
 		refList();
@@ -337,7 +324,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 	@Override
 	public void cryptoProcessComplete() {
 		this.runOnUiThread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				Toast.makeText(FileListActivity.this, "Crypto process complete", Toast.LENGTH_SHORT).show();
@@ -349,7 +336,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 	@Override
 	public void cryptoProcessError() {
 		this.runOnUiThread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				Toast.makeText(FileListActivity.this, "Crypto process error", Toast.LENGTH_SHORT).show();

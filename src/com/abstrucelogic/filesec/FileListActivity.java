@@ -5,11 +5,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.abstrucelogic.crypto.CryptoManager;
+import com.abstrucelogic.crypto.CryptoProgressListener;
+import com.abstrucelogic.crypto.conf.CryptoConf;
+import com.abstrucelogic.crypto.constants.CryptoOperation;
+import com.abstrucelogic.crypto.constants.CryptoProcessMode;
+import com.abstrucelogic.crypto.processor.EncryptionProcessor;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +43,7 @@ import android.widget.Toast;
  * @author MANISH
  *
  */
-public class FileListActivity extends Activity {
+public class FileListActivity extends Activity implements CryptoProgressListener {
 
 	public final static String FILE_PATH = "file_path";
 	public final static String ALLOW_HIDDEN_FILES = "show_hidden_files";
@@ -83,7 +95,7 @@ public class FileListActivity extends Activity {
 					//File Encripe hear
 					displayAlertDialog(nfile);
 					// Finish the activity
-					finish();
+				
 				} else {
 					mDirectory = nfile;
 					// Update the files list
@@ -114,7 +126,7 @@ public class FileListActivity extends Activity {
 
 	private void displayAlertDialog(final File nfile) {
 		final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-		if(nfile.getName().startsWith(getString(R.string.enc_))){
+		if(!nfile.getName().startsWith(getString(R.string.enc_))){
 			alertDialog.setTitle(getString(R.string.encript));
 			alertDialog.setMessage(getString(R.string.enc_message));
 		}else{
@@ -124,10 +136,41 @@ public class FileListActivity extends Activity {
 		alertDialog.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.yes), new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface dialog, int which) {
-				if(nfile.getName().startsWith(getString(R.string.enc_))){
+				if(!nfile.getName().startsWith(getString(R.string.enc_))){
 					Toast.makeText(FileListActivity.this,"Encrypting...", Toast.LENGTH_SHORT).show();
+					new AsyncTask< File, Integer, String>(){
+						@Override
+						protected String doInBackground(File... params) {
+							CryptoManager cryptoManager = CryptoManager.getInstance();
+							CryptoConf conf= new CryptoConf();
+							conf.setCipher(getEncCipher());
+							conf.setInputFilePath(params[0].getAbsolutePath());
+							conf.setListener(FileListActivity.this);
+							conf.setOperation(CryptoOperation.ENCRYPTION);
+							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+params[0].getName());
+							conf.setProcessMode(CryptoProcessMode.SYNC);
+							cryptoManager.process(conf);
+							return null;
+						}
+					}.execute(nfile);
 				}else{
 					Toast.makeText(FileListActivity.this,"Decripting...", Toast.LENGTH_SHORT).show();
+					new AsyncTask< File, Integer, String>(){
+
+						@Override
+						protected String doInBackground(File... params) {
+							CryptoManager cryptoManager = CryptoManager.getInstance();
+							CryptoConf conf= new CryptoConf();
+							conf.setCipher(getEncCipher());
+							conf.setInputFilePath(params[0].getAbsolutePath());
+							conf.setListener(FileListActivity.this);
+							conf.setOperation(CryptoOperation.DECRYPTION);
+							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+params[0].getName());
+							conf.setProcessMode(CryptoProcessMode.ASYNC);
+							cryptoManager.process(conf);
+							return null;
+						}
+					}.execute(nfile);
 				}
 			}
 		});
@@ -140,10 +183,34 @@ public class FileListActivity extends Activity {
 
 		alertDialog.setIcon(R.drawable.ic_launcher);
 		alertDialog.show();
+	}
+	private static Cipher getEncCipher() {
 
+		Cipher cipher = null;
+
+		try {
+			String key = "hoplesskey123456";
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
+			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
+
+			byte[] byteArrKey = key.getBytes("UTF-8");
+
+			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
+
+			IvParameterSpec spec = new IvParameterSpec(byteArr);
+
+			cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec); 
+
+		} catch(Exception ex) {
+
+			ex.printStackTrace();
+
+		}
+
+		return cipher;
 
 	}
-
 	@Override
 	protected void onResume() {
 		refList();
@@ -228,6 +295,32 @@ public class FileListActivity extends Activity {
 
 			return row;
 		}
+
+	}
+
+
+
+	@Override
+	public void cryptoProcessStarted() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void cryptoInProgress() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void cryptoProcessComplete() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void cryptoProcessError() {
+		// TODO Auto-generated method stub
 
 	}
 }

@@ -13,5 +13,9 @@
     <string name="no">No</string>
     <string name="enc_">ENC_</string>
     <string name="dec_">DEC_</string>
+    <string name="async_task">Async Task</string>
+    <string name="prosess">Prosess</string>
+    <string name="service">Service</string>
+    <string name="cancel">Cancel</string>
 
 </resources>

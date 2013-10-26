@@ -177,11 +177,12 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		if(!nfile.getName().startsWith(getString(R.string.enc_))){
 			conf.setCipher(getEncCipher());
 			conf.setOperation(CryptoOperation.ENCRYPTION);
+			conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.enc_) + nfile.getName());
 		}else{
 			conf.setCipher(getDecCipher());
 			conf.setOperation(CryptoOperation.DECRYPTION);
+			conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.dec_) + nfile.getName());
 		}
-		conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+nfile.getName());
 		conf.setProcessMode(processMode);
 		cryptoManager.process(conf,FileListActivity.this);
 
@@ -254,12 +255,10 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 			}
 
 			File object = mObjects.get(position);
-
 			ImageView imageView = (ImageView)row.findViewById(R.id.file_picker_image);
 			TextView textView = (TextView)row.findViewById(R.id.file_picker_text);
 			// Set single line
 			textView.setSingleLine(true);
-
 			textView.setText(object.getName());
 			if(object.isFile()) {
 				// Show the file icon
@@ -268,10 +267,8 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 				// Show the folder icon
 				imageView.setImageResource(R.drawable.folder);
 			}
-
 			return row;
 		}
-
 	}
 
 	private static Cipher getEncCipher() {

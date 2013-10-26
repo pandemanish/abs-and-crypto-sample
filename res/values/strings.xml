@@ -12,5 +12,6 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="enc_">ENC_</string>
+    <string name="dec_">DEC_</string>
 
 </resources>

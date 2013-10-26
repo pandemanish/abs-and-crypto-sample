@@ -161,12 +161,12 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 						protected String doInBackground(File... params) {
 							CryptoManager cryptoManager = CryptoManager.getInstance();
 							CryptoConf conf= new CryptoConf();
-							conf.setCipher(getEncCipher());
+							conf.setCipher(getDecCipher());
 							conf.setInputFilePath(params[0].getAbsolutePath());
 							conf.setListener(FileListActivity.this);
 							conf.setOperation(CryptoOperation.DECRYPTION);
-							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+params[0].getName());
-							conf.setProcessMode(CryptoProcessMode.ASYNC);
+							conf.setOutputFilePath(params[0].getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.dec_) + params[0].getName());
+							conf.setProcessMode(CryptoProcessMode.SYNC);
 							cryptoManager.process(conf);
 							return null;
 						}
@@ -211,6 +211,23 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		return cipher;
 
 	}
+	
+	private static Cipher getDecCipher() {
+		String key = "hoplesskey123456";
+		Cipher cipher = null;
+		try {
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");	
+			byte[] byteArrKey = key.getBytes("UTF-8");
+			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
+			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
+			IvParameterSpec spec = new IvParameterSpec(byteArr);
+			cipher.init(Cipher.DECRYPT_MODE, keySpec, spec); 	
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}
+		return cipher;
+	}
+	
 	@Override
 	protected void onResume() {
 		refList();
@@ -302,7 +319,12 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 
 	@Override
 	public void cryptoProcessStarted() {
-		// TODO Auto-generated method stub
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				Toast.makeText(FileListActivity.this, "Crypto process started", Toast.LENGTH_SHORT).show();
+			}
+		});
 
 	}
 
@@ -314,13 +336,25 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 
 	@Override
 	public void cryptoProcessComplete() {
-		// TODO Auto-generated method stub
+		this.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Toast.makeText(FileListActivity.this, "Crypto process complete", Toast.LENGTH_SHORT).show();
+			}
+		});
 
 	}
 
 	@Override
 	public void cryptoProcessError() {
-		// TODO Auto-generated method stub
+		this.runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Toast.makeText(FileListActivity.this, "Crypto process error", Toast.LENGTH_SHORT).show();
+			}
+		});
 
 	}
 }

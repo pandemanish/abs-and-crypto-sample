@@ -27,6 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <service android:name="com.abstrucelogic.crypto.service.CryptoService"/>
+        
     </application>
 
 </manifest>

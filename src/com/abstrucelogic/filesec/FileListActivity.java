@@ -14,25 +14,22 @@ import com.abstrucelogic.crypto.CryptoProgressListener;
 import com.abstrucelogic.crypto.conf.CryptoConf;
 import com.abstrucelogic.crypto.constants.CryptoOperation;
 import com.abstrucelogic.crypto.constants.CryptoProcessMode;
-import com.abstrucelogic.crypto.processor.EncryptionProcessor;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -65,8 +62,6 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); 
 		//remove the title bar
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		//To Make app full screen
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN); 
 		//setting UI from XML 
 		setContentView(R.layout.file_picker_activity);
 
@@ -125,94 +120,71 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 	}
 
 	private void displayAlertDialog(final File nfile) {
-		final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		if(!nfile.getName().startsWith(getString(R.string.enc_))){
-			alertDialog.setTitle(getString(R.string.encript));
-			alertDialog.setMessage(getString(R.string.enc_message));
+			builder.setTitle(getString(R.string.encript));
+			builder.setMessage(getString(R.string.enc_message));
 		}else{
-			alertDialog.setTitle(getString(R.string.decript));
-			alertDialog.setMessage(getString(R.string.decr_message));
+			builder.setTitle(getString(R.string.decript));
+			builder.setMessage(getString(R.string.decr_message));
 		}
-		alertDialog.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.yes), new DialogInterface.OnClickListener() {
+		final FrameLayout frameView = new FrameLayout(this);
+		builder.setView(frameView);
 
-			public void onClick(DialogInterface dialog, int which) {
-				if(!nfile.getName().startsWith(getString(R.string.enc_))){
-					Toast.makeText(FileListActivity.this,"Encrypting...", Toast.LENGTH_SHORT).show();
-					CryptoManager cryptoManager = CryptoManager.getInstance();
-					CryptoConf conf= new CryptoConf();
-					conf.setCipher(getEncCipher());
-					conf.setInputFilePath(nfile.getAbsolutePath());
-					conf.setListener(FileListActivity.this);
-					conf.setOperation(CryptoOperation.ENCRYPTION);
-					conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+nfile.getName());
-					conf.setProcessMode(CryptoProcessMode.ASYNC);
-					cryptoManager.process(conf,FileListActivity.this);
-				}else{
-					Toast.makeText(FileListActivity.this,"Decripting...", Toast.LENGTH_SHORT).show();
-					CryptoManager cryptoManager = CryptoManager.getInstance();
-					CryptoConf conf= new CryptoConf();
-					conf.setCipher(getDecCipher());
-					conf.setInputFilePath(nfile.getAbsolutePath());
-					conf.setListener(FileListActivity.this);
-					conf.setOperation(CryptoOperation.DECRYPTION);
-					conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString() + File.separator + getString(R.string.dec_) + nfile.getName());
-					conf.setProcessMode(CryptoProcessMode.ASYNC);
-					cryptoManager.process(conf,FileListActivity.this);
-				}
-			}
-		});
-		alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE,getString(R.string.no), new DialogInterface.OnClickListener() {
+		final AlertDialog alertDialog = builder.create();
+		LayoutInflater inflater = alertDialog.getLayoutInflater();
+		View dialoglayout = inflater.inflate(R.layout.dialog_layout, frameView);
 
-			public void onClick(DialogInterface dialog, int which) {
+		alertDialog.setView(dialoglayout);
+		dialoglayout.findViewById(R.id.asyncButton).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				buttonOnClick(nfile,CryptoProcessMode.ASYNC);
 				alertDialog.dismiss();
 			}
 		});
-
+		dialoglayout.findViewById(R.id.syncButton).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				buttonOnClick(nfile,CryptoProcessMode.SYNC);
+				alertDialog.dismiss();
+			}
+		});
+		dialoglayout.findViewById(R.id.servicButton).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				buttonOnClick(nfile,CryptoProcessMode.SERVICE);
+				alertDialog.dismiss();
+			}
+		});
+		dialoglayout.findViewById(R.id.cancel).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				alertDialog.dismiss();
+			}
+		});
 		alertDialog.setIcon(R.drawable.ic_launcher);
 		alertDialog.show();
 	}
-	private static Cipher getEncCipher() {
 
-		Cipher cipher = null;
+	public void buttonOnClick(File nfile, CryptoProcessMode processMode){
+		CryptoManager cryptoManager = CryptoManager.getInstance();
+		CryptoConf conf= new CryptoConf();
 
-		try {
-			String key = "hoplesskey123456";
-			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-
-			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
-
-			byte[] byteArrKey = key.getBytes("UTF-8");
-
-			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
-
-			IvParameterSpec spec = new IvParameterSpec(byteArr);
-
-			cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec); 
-
-		} catch(Exception ex) {
-
-			ex.printStackTrace();
-
+		conf.setInputFilePath(nfile.getAbsolutePath());
+		conf.setListener(FileListActivity.this);
+		if(!nfile.getName().startsWith(getString(R.string.enc_))){
+			conf.setCipher(getEncCipher());
+			conf.setOperation(CryptoOperation.ENCRYPTION);
+		}else{
+			conf.setCipher(getDecCipher());
+			conf.setOperation(CryptoOperation.DECRYPTION);
 		}
+		conf.setOutputFilePath(nfile.getParentFile().getAbsolutePath().toString()+File.separator+getString(R.string.enc_)+nfile.getName());
+		conf.setProcessMode(processMode);
+		cryptoManager.process(conf,FileListActivity.this);
 
-		return cipher;
-
-	}
-
-	private static Cipher getDecCipher() {
-		String key = "hoplesskey123456";
-		Cipher cipher = null;
-		try {
-			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");	
-			byte[] byteArrKey = key.getBytes("UTF-8");
-			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
-			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
-			IvParameterSpec spec = new IvParameterSpec(byteArr);
-			cipher.init(Cipher.DECRYPT_MODE, keySpec, spec); 	
-		} catch(Exception ex) {
-			ex.printStackTrace();
-		}
-		return cipher;
 	}
 
 	@Override
@@ -302,6 +274,49 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 
 	}
 
+	private static Cipher getEncCipher() {
+
+		Cipher cipher = null;
+
+		try {
+			String key = "hoplesskey123456";
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
+			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
+
+			byte[] byteArrKey = key.getBytes("UTF-8");
+
+			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
+
+			IvParameterSpec spec = new IvParameterSpec(byteArr);
+
+			cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec); 
+
+		} catch(Exception ex) {
+
+			ex.printStackTrace();
+
+		}
+
+		return cipher;
+
+	}
+
+	private static Cipher getDecCipher() {
+		String key = "hoplesskey123456";
+		Cipher cipher = null;
+		try {
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");	
+			byte[] byteArrKey = key.getBytes("UTF-8");
+			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
+			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
+			IvParameterSpec spec = new IvParameterSpec(byteArr);
+			cipher.init(Cipher.DECRYPT_MODE, keySpec, spec); 	
+		} catch(Exception ex) {
+			ex.printStackTrace();
+		}
+		return cipher;
+	}
 
 
 	@Override
@@ -317,7 +332,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 
 	@Override
 	public void cryptoInProgress() {
-		// TODO Auto-generated method stub
+
 
 	}
 

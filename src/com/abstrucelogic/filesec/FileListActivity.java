@@ -6,8 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * 
@@ -46,7 +48,7 @@ public class FileListActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		// Keeping the Orientation PORTRAIT
 		setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); 
 		//remove the title bar
@@ -64,13 +66,10 @@ public class FileListActivity extends Activity {
 		View emptyView = inflator.inflate(R.layout.file_picker_empty_view, null);
 		((ViewGroup) listView.getParent()).addView(emptyView);
 		listView.setEmptyView(emptyView);
-
 		// Set initial directory
 		mDirectory = new File(DEFAULT_INITIAL_DIRECTORY);
-
 		// Initialize the ArrayList
 		mFiles = new ArrayList<File>();
-
 		// Set the ListAdapter
 		mAdapter = new FileListAdapter(this, mFiles);
 		listView.setAdapter(mAdapter);
@@ -82,6 +81,7 @@ public class FileListActivity extends Activity {
 
 				if(nfile.isFile()) {
 					//File Encripe hear
+					displayAlertDialog(nfile);
 					// Finish the activity
 					finish();
 				} else {
@@ -90,6 +90,7 @@ public class FileListActivity extends Activity {
 					refList();
 				}
 			}
+
 		});
 
 
@@ -97,7 +98,7 @@ public class FileListActivity extends Activity {
 		if(getIntent().hasExtra(FILE_PATH)) {
 			mDirectory = new File(getIntent().getStringExtra(FILE_PATH));
 		}
-		
+
 		button.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
@@ -109,6 +110,38 @@ public class FileListActivity extends Activity {
 				}
 			}
 		});
+	}
+
+	private void displayAlertDialog(final File nfile) {
+		final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+		if(nfile.getName().startsWith(getString(R.string.enc_))){
+			alertDialog.setTitle(getString(R.string.encript));
+			alertDialog.setMessage(getString(R.string.enc_message));
+		}else{
+			alertDialog.setTitle(getString(R.string.decript));
+			alertDialog.setMessage(getString(R.string.decr_message));
+		}
+		alertDialog.setButton(AlertDialog.BUTTON_POSITIVE,getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface dialog, int which) {
+				if(nfile.getName().startsWith(getString(R.string.enc_))){
+					Toast.makeText(FileListActivity.this,"Encrypting...", Toast.LENGTH_SHORT).show();
+				}else{
+					Toast.makeText(FileListActivity.this,"Decripting...", Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE,getString(R.string.no), new DialogInterface.OnClickListener() {
+
+			public void onClick(DialogInterface dialog, int which) {
+				alertDialog.dismiss();
+			}
+		});
+
+		alertDialog.setIcon(R.drawable.ic_launcher);
+		alertDialog.show();
+
+
 	}
 
 	@Override

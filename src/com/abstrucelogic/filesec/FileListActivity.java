@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -168,22 +169,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		alertDialog.show();
 	}
 
-	public void buttonOnClick(final File nfile, final CryptoProcessMode processMode){
-		if(processMode == CryptoProcessMode.SYNC) {
-			new Thread(new Runnable() {
-				
-				@Override
-				public void run() {
-					execCrypto(nfile, processMode);
-					
-				}
-			}).start();
-		} else {
-			execCrypto(nfile, processMode);
-		}
-	}
-
-	public void execCrypto(File nfile, CryptoProcessMode processMode) {
+	public void buttonOnClick(File nfile, CryptoProcessMode processMode){
 		CryptoManager cryptoManager = CryptoManager.getInstance();
 		CryptoConf conf= new CryptoConf();
 
@@ -202,7 +188,7 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		cryptoManager.process(conf,FileListActivity.this);
 
 	}
-	
+
 	@Override
 	protected void onResume() {
 		refList();
@@ -293,14 +279,23 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 		try {
 			String key = "hoplesskey123456";
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
 			byte[] byteArr = "1234567891234567".getBytes("UTF-8");
+
 			byte[] byteArrKey = key.getBytes("UTF-8");
+
 			SecretKeySpec keySpec = new SecretKeySpec(byteArrKey, "AES/CBC/PKCS5Padding");
+
 			IvParameterSpec spec = new IvParameterSpec(byteArr);
+
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec, spec); 
+
 		} catch(Exception ex) {
+
 			ex.printStackTrace();
+
 		}
+
 		return cipher;
 
 	}
@@ -333,34 +328,40 @@ public class FileListActivity extends Activity implements CryptoProgressListener
 
 	}
 
-	@Override
-	public void cryptoInProgress(final int prog) {
-		this.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				Toast.makeText(FileListActivity.this, "Crypto process inprog - " + prog, 50).show();
-			}
-		});
-	}
+	
 
 	@Override
 	public void cryptoProcessComplete() {
 		this.runOnUiThread(new Runnable() {
+
 			@Override
 			public void run() {
 				Toast.makeText(FileListActivity.this, "Crypto process complete", Toast.LENGTH_SHORT).show();
 			}
 		});
+
 	}
 
 	@Override
 	public void cryptoProcessError() {
 		this.runOnUiThread(new Runnable() {
+
 			@Override
 			public void run() {
 				Toast.makeText(FileListActivity.this, "Crypto process error", Toast.LENGTH_SHORT).show();
 			}
 		});
 
+	}
+
+	@Override
+	public void cryptoInProgress(final float prog) {
+		this.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				Log.i("File ", "Crypto in process "+prog);
+			}
+		});
 	}
 }
